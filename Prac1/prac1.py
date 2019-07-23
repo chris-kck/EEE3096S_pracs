@@ -10,7 +10,9 @@ Date: 23/07/2019
 """
 
 # import Relevant Librares
-import RPi.GPIO as GPIO, time
+import RPi.GPIO as GPIO, time, itertools
+
+
 
 # Logic that you write
 def main():
@@ -19,12 +21,14 @@ def main():
     out_pins = [3,5,7]
     GPIO.setmode(GPIO.BOARD)
     GPIO.setup(out_pins, GPIO.OUT)
-    for i in range (5):
-        GPIO.output(out_pins, GPIO.HIGH)
-        time.sleep(1)
-        GPIO.output(out_pins, GPIO.LOW)
-        time.sleep(1)
+    binaryVals = list(itertools.product([0,1], repeat = 3))
+    print(binaryVals)
     
+    for i in binaryVals:
+        GPIO.output(out_pins, i)
+        time.sleep(2)
+        GPIO.output(out_pins, 0)
+        time.sleep(2)    
 
 # Only run the functions if 
 if __name__ == "__main__":
