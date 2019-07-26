@@ -1,10 +1,10 @@
 # EEE3096S
 Practical content for EEE3096S Embedded Systems II Course at the University of Cape Town
 
-## Prac 0
+## Prac 0 ✓
 Practical 0 covers all the set up and familiarization you need to do in order to become comfortable working with the Raspberry Pi.
 
-## Prac 1
+## Prac 1 ✓
 The first practical will get you comfortable interfacing with the Raspberry Pi and GPIO basics, as well as exposure to git.
 
 ## Prac 2
