@@ -7,7 +7,7 @@ Practical 0 covers all the set up and familiarization you need to do in order to
 ## Prac 1 ✓
 The first practical will get you comfortable interfacing with the Raspberry Pi and GPIO basics, as well as exposure to git.
 
-## Prac 2
+## Prac 2 ✓
 Practical 2 serves as an introduction to programming in C. This is done through comparing C and python in the form of a scientific investigation.
 
 ## Prac 3
