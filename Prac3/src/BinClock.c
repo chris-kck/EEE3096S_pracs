@@ -12,7 +12,10 @@
 #include <wiringPiI2C.h>
 #include <stdio.h> //For printf functions
 #include <stdlib.h> // For system functions
-#include <math.h> 
+#include <math.h>
+#include <string.h>
+#include  <signal.h>
+
 #include <softPwm.h> // Foe pulse width  modulation
 #include "BinClock.h"
 #include "CurrentTime.h"
@@ -23,6 +26,29 @@ long lastInterruptTime = 0; //Used for button debounce
 int RTC; //Holds the RTC instance
 
 int HH,MM,SS;
+
+
+
+
+void INThandler(int);
+void  INThandler(int sig)
+{
+     char  c;
+
+     signal(sig, SIG_IGN);
+     printf("\n Hectic!, Did you hit Ctrl-C?\n"
+            "Do you really want to quit? [y/n] ");
+     c = getchar();
+     if (c == 'y' || c == 'Y'){
+		//PiCleanup();
+		printf("Program gracefully exited");
+        exit(0);
+	 }
+     else
+          signal(SIGINT, INThandler);
+     getchar(); // Get new line character
+}
+
 
 char binary[4];
 char* Dec2Bin(int decValue){
@@ -100,6 +126,7 @@ int main(void){
 	wiringPiI2CWriteReg8(RTC, 0x13+TIMEZONE, 0x3);
 	wiringPiI2CWriteReg8(RTC, 0x4, 0x5);
 	wiringPiI2CWriteReg8(RTC, 0x00, SEC);
+	signal(SIGINT, INThandler);
 	
 	// Repeat this until we shut down
 	for (;;){
@@ -112,11 +139,10 @@ int main(void){
 		mins = wiringPiI2CReadReg8 (RTC, 0x4);
 		secs = wiringPiI2CReadReg8 (RTC, 0x00);
 		// Print out the time we have stored on our RTC
+		//digitalWrite(LEDS[4], 0);
+		//digitalWrite (LEDS[2], 0);
 		lightHours(hours);
-		printf("The current time is: %x:%x:%x\n", hours, mins, secs);
-		
-		digitalWrite (LEDS[0], LOW);
-		digitalWrite (LEDS[2], LOW);		
+		printf("The current time is: %x:%x:%x\n", hours, mins, secs);		
 
 		//using a delay to make our program "less CPU hungry"
 		delay(1000); //milliseconds
@@ -143,13 +169,17 @@ int hFormat(int hours){
  */
 void lightHours(int units){
 	// Write your logic to light up the hour LEDs here
-	char* hours =Dec2Bin(units);
-	for (int i; i<4; i++){
-		if (hours[i]) {
+	char* hours =Dec2Bin(5);
+	printf("HRS is: %s , %d \n" , hours, strlen(hours));
+	for (int i=0; i<strlen(hours); i++){
+		if (hours[i]=='1') {
 		digitalWrite (LEDS[i], HIGH);
+		printf("printed 1 ");
 		}
-		else {digitalWrite (LEDS[i], LOW);}
+		else {digitalWrite (LEDS[i], LOW);
+		printf("printed 0 ");}
 		}
+	
 }
 
 /*
@@ -284,5 +314,4 @@ void toggleTime(void){
 	}
 	lastInterruptTime = interruptTime;
 }
-
 

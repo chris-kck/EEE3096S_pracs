@@ -13,6 +13,5 @@ default:
 
 run:
     sudo ./bin/Clock
-
 clean:
     rm $(PROG) $(OBJS)
