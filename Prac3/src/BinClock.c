@@ -12,7 +12,8 @@
 #include <wiringPiI2C.h>
 #include <stdio.h> //For printf functions
 #include <stdlib.h> // For system functions
-
+#include <math.h> 
+#include <softPwm.h> // Foe pulse width  modulation
 #include "BinClock.h"
 #include "CurrentTime.h"
 
@@ -22,6 +23,27 @@ long lastInterruptTime = 0; //Used for button debounce
 int RTC; //Holds the RTC instance
 
 int HH,MM,SS;
+
+char binary[4];
+char* Dec2Bin(int decValue){
+
+            int nValue = (int)floor((log(decValue)/log(2))); //to get largest power radix will be raised to for initial division
+            char symbols[2]= {'0','1'};
+            int quotient,remainder;
+
+            int count=0;
+            for(int i = nValue ; i>=0 ;i--){
+                quotient= (int)(decValue/pow(2,i)); //exact integer quotient
+                remainder= decValue% (int)pow(2,i); //remainder
+                decValue=remainder;
+                binary[count]=symbols[quotient]; count++;//=symbols[quotient];
+                }
+                binary[count]='\0'; //null terminator for printing out
+            return binary;
+}
+
+
+
 
 void initGPIO(void){
 	/* 
@@ -41,6 +63,9 @@ void initGPIO(void){
 	
 	//Set Up the Seconds LED for PWM
 	//Write your logic here
+    softPwmCreate (LEDS[10], 0, 100);
+	
+	// void softPwmWrite (int pin, int value) ; // To write to pin
 	
 	printf("LEDS done\n");
 	
@@ -67,9 +92,14 @@ int main(void){
 
 	//Set random time (3:04PM)
 	//You can comment this file out later
+	/*
 	wiringPiI2CWriteReg8(RTC, HOUR, 0x13+TIMEZONE);
 	wiringPiI2CWriteReg8(RTC, MIN, 0x4);
 	wiringPiI2CWriteReg8(RTC, SEC, 0x00);
+	*/
+	wiringPiI2CWriteReg8(RTC, 0x13+TIMEZONE, 0x3);
+	wiringPiI2CWriteReg8(RTC, 0x4, 0x5);
+	wiringPiI2CWriteReg8(RTC, 0x00, SEC);
 	
 	// Repeat this until we shut down
 	for (;;){
@@ -78,9 +108,15 @@ int main(void){
 		
 		//Function calls to toggle LEDs
 		//Write your logic here
-		
+		hours = wiringPiI2CReadReg8 (RTC, 0x13+TIMEZONE);
+		mins = wiringPiI2CReadReg8 (RTC, 0x4);
+		secs = wiringPiI2CReadReg8 (RTC, 0x00);
 		// Print out the time we have stored on our RTC
+		lightHours(hours);
 		printf("The current time is: %x:%x:%x\n", hours, mins, secs);
+		
+		digitalWrite (LEDS[0], LOW);
+		digitalWrite (LEDS[2], LOW);		
 
 		//using a delay to make our program "less CPU hungry"
 		delay(1000); //milliseconds
@@ -106,7 +142,14 @@ int hFormat(int hours){
  * Turns on corresponding LED's for hours
  */
 void lightHours(int units){
-	// Write your logic to light up the hour LEDs here	
+	// Write your logic to light up the hour LEDs here
+	char* hours =Dec2Bin(units);
+	for (int i; i<4; i++){
+		if (hours[i]) {
+		digitalWrite (LEDS[i], HIGH);
+		}
+		else {digitalWrite (LEDS[i], LOW);}
+		}
 }
 
 /*
@@ -241,3 +284,5 @@ void toggleTime(void){
 	}
 	lastInterruptTime = interruptTime;
 }
+
+
