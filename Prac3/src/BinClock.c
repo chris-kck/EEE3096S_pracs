@@ -140,6 +140,7 @@ int main(void){
 		secs = wiringPiI2CReadReg8 (RTC, 0x00);
 		// Print out the time we have stored on our RTC
 		lightHours(hours);
+		lightMins(mins);
 		printf("The current time is: %x:%x:%x\n", hours, mins, secs);		
 
 		//using a delay to make our program "less CPU hungry"
@@ -167,7 +168,7 @@ int hFormat(int hours){
  */
 void lightHours(int units){
 	// Write your logic to light up the hour LEDs here
-	char* hours =Dec2Bin(5);
+	char* hours =Dec2Bin(units);
 	printf("HRS is: %s , %d \n" , hours, strlen(hours));
 	for (int i=0; i<strlen(hours); i++){
 		if (hours[i]=='1') {
@@ -185,6 +186,16 @@ void lightHours(int units){
  */
 void lightMins(int units){
 	//Write your logic to light up the minute LEDs here
+	char* minutes =Dec2Bin(units);
+	printf("\n MINS is: %s , %d \n" , minutes, strlen(minutes));
+	for (int i=0; i<strlen(minutes); i++){
+		if (minutes[i]=='1') {
+		digitalWrite (LEDS[4+i], HIGH);
+		printf("printed 1 ");
+		}
+		else {digitalWrite (LEDS[4+i], LOW);
+		printf("printed 0 ");}
+		}
 }
 
 /*
