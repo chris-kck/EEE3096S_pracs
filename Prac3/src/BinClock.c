@@ -20,7 +20,8 @@
 #include "BinClock.h"
 #include "CurrentTime.h"
 
-//Global variables
+
+
 int hours, mins, secs;
 long lastInterruptTime = 0; //Used for button debounce
 int RTC; //Holds the RTC instance
@@ -28,10 +29,15 @@ int RTC; //Holds the RTC instance
 int HH,MM,SS;
 
 
-
+//===============================
+// FUNCTION DECLARATIONS		+
+//===============================
 
 void INThandler(int);
-void  INThandler(int sig)
+void PiCleanup(void);
+
+
+void  INThandler(int sig) // ref: http://en.cppreference.com/w/c/program/signal
 {
      char  c;
 
@@ -40,7 +46,7 @@ void  INThandler(int sig)
             "Do you really want to quit? [y/n] ");
      c = getchar();
      if (c == 'y' || c == 'Y'){
-		//PiCleanup();
+		PiCleanup();
 		printf("Program gracefully exited");
         exit(0);
 	 }
@@ -70,7 +76,6 @@ char* Dec2Bin(int decValue){
 
 
 
-
 void initGPIO(void){
 	/* 
 	 * Sets GPIO using wiringPi pins. see pinout.xyz for specific wiringPi pins
@@ -89,7 +94,7 @@ void initGPIO(void){
 	
 	//Set Up the Seconds LED for PWM
 	//Write your logic here
-    softPwmCreate (LEDS[10], 0, 100);
+    softPwmCreate (LEDS[10], 0, 100); //PWM only possible for pin 0.
 	
 	// void softPwmWrite (int pin, int value) ; // To write to pin
 	
@@ -117,16 +122,11 @@ int main(void){
 	initGPIO();
 
 	//Set random time (3:04PM)
-	//You can comment this file out later
-	/*
-	wiringPiI2CWriteReg8(RTC, HOUR, 0x13+TIMEZONE);
-	wiringPiI2CWriteReg8(RTC, MIN, 0x4);
-	wiringPiI2CWriteReg8(RTC, SEC, 0x00);
-	*/
+	
 	wiringPiI2CWriteReg8(RTC, 0x13+TIMEZONE, 0x3);
 	wiringPiI2CWriteReg8(RTC, 0x4, 0x5);
 	wiringPiI2CWriteReg8(RTC, 0x00, SEC);
-	signal(SIGINT, INThandler);
+	signal(SIGINT, INThandler);	 
 	
 	// Repeat this until we shut down
 	for (;;){
@@ -139,8 +139,6 @@ int main(void){
 		mins = wiringPiI2CReadReg8 (RTC, 0x4);
 		secs = wiringPiI2CReadReg8 (RTC, 0x00);
 		// Print out the time we have stored on our RTC
-		//digitalWrite(LEDS[4], 0);
-		//digitalWrite (LEDS[2], 0);
 		lightHours(hours);
 		printf("The current time is: %x:%x:%x\n", hours, mins, secs);		
 
@@ -315,3 +313,11 @@ void toggleTime(void){
 	lastInterruptTime = interruptTime;
 }
 
+
+void PiCleanup(void){
+	
+	// we reset all registers and switch off LEDs
+	for(int i; i < sizeof(LEDS)/sizeof(LEDS[0]); i++){
+	    pinMode(LEDS[i], INPUT); //hacky method to switch off all LEDs
+	}
+}
