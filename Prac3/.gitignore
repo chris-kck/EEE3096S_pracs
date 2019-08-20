@@ -11,8 +11,8 @@
 *.gch
 *.pch
 
-/bin
-/obj
+bin
+obj
 
 # Executables
 *.exe
