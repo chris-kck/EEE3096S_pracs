@@ -57,10 +57,10 @@ void  INThandler(int sig) // ref: http://en.cppreference.com/w/c/program/signal
 }
 
 
-char binary[4];
+char binary[10];
 char* Dec2Bin(int decValue){
 
-            int nValue = (int)floor((log(decValue)/log(2))); //to get largest power radix will be raised to for initial division
+            int nValue = (int)floor((log(decValue)/log(2))); //to get largest power bin will be raised to for initial division
             char symbols[2]= {'0','1'};
             int quotient,remainder;
 
@@ -85,20 +85,19 @@ void initGPIO(void){
 	 */
 	printf("Setting up\n");
 	wiringPiSetup(); //This is the default mode. If you want to change pinouts, be aware
-	
 	RTC = wiringPiI2CSetup(RTCAddr); //Set up the RTC
 	
 	//Set up the LEDS
 	for(int i; i < sizeof(LEDS)/sizeof(LEDS[0]); i++){
 	    pinMode(LEDS[i], OUTPUT);
+		digitalWrite (LEDS[i], HIGH);
+		delay(100);
+		digitalWrite (LEDS[i], LOW);
 	}
-	
+	pinMode(SECS, OUTPUT);
 	//Set Up the Seconds LED for PWM
-	//Write your logic here
-    softPwmCreate (LEDS[10], 0, 100); //PWM only possible for pin 0.
-	
+    softPwmCreate (SECS, 0, 100); //PWM only possible for pin 1.
 	// void softPwmWrite (int pin, int value) ; // To write to pin
-	
 	printf("LEDS done\n");
 	
 	//Set up the Buttons
@@ -108,7 +107,9 @@ void initGPIO(void){
 	}
 	
 	//Attach interrupts to Buttons
-	//Write your logic here
+	wiringPiISR (BTNS[0], INT_EDGE_FALLING,  &hourInc); //no buttons detected so far
+	wiringPiISR (BTNS[1], INT_EDGE_FALLING,  &minInc);	//wiringPiISR (BTNS[0], INT_EDGE_FALLING,  void (*function)(void));
+	signal(SIGINT, INThandler);	 // Cntrl-C Interrupt Handler
 	
 	printf("BTNS done\n");
 	printf("Setup done\n");
@@ -123,29 +124,33 @@ int main(void){
 	initGPIO();
 
 	//Set random time (3:04PM)
-	
-	wiringPiI2CWriteReg8(RTC, 0x13+TIMEZONE, 0x3);//HRS
-	wiringPiI2CWriteReg8(RTC, 0x4, 0x5); //MINS
-	wiringPiI2CWriteReg8(RTC, 0x00, SEC); //SEC
-	signal(SIGINT, INThandler);	 
-	wiringPiISR (BTNS[1], INT_EDGE_FALLING,  &hourInc); //no buttons detected so far
-	wiringPiISR (BTNS[1], INT_EDGE_FALLING,  &minInc);
-	//wiringPiISR (BTNS[0], INT_EDGE_FALLING,  void (*function)(void));
+	wiringPiI2CWriteReg8(RTC, HOUR, 0x13+TIMEZONE);//HRS
+	wiringPiI2CWriteReg8(RTC, MIN, 0x42); //MINS
+	wiringPiI2CWriteReg8(RTC, SEC, 0x21); //SEC
 	
 	// Repeat this until we shut down
 	for (;;){
 		//Fetch the time from the RTC
-		//Write your logic here
+		hours = wiringPiI2CReadReg8 (RTC, HOUR);
+		mins = wiringPiI2CReadReg8 (RTC, MIN);
+		secs = wiringPiI2CReadReg8 (RTC, SEC);
+		
+		hours = hFormat(hexCompensation(hours)); // change to 12 hour format and change to dec.
+		mins = hexCompensation(mins); //change to dec.
+		secs = hexCompensation(secs); //change to dec.
 		
 		//Function calls to toggle LEDs
-		//Write your logic here
-		hours = wiringPiI2CReadReg8 (RTC, 0x13+TIMEZONE);
-		mins = wiringPiI2CReadReg8 (RTC, 0x4);
-		secs = wiringPiI2CReadReg8 (RTC, 0x00);
+		//digitalWrite (LEDS[0], 1);
+		//digitalWrite (LEDS[1], 1);
+		//digitalWrite (LEDS[2], 1);		
+		//lightHours(3);
+		lightMins(3);
+		//lightHours(hours);
+		//lightMins(mins);
+		//secPWM(secs);
+		
 		// Print out the time we have stored on our RTC
-		lightHours(hFormat(hours));
-		lightMins(mins);
-		printf("The current time is: %x:%x:%x\n", hours, mins, secs);		
+		printf("The current time is: %d:%d:%d\n", hours, mins, secs);		
 
 		//using a delay to make our program "less CPU hungry"
 		delay(1000); //milliseconds
@@ -170,11 +175,28 @@ int hFormat(int hours){
 /*
  * Turns on corresponding LED's for hours
  */
+
+
 void lightHours(int units){
 	// Write your logic to light up the hour LEDs here
-	char* hours =Dec2Bin(2);
-	printf("HRS is: %s , %d \n" , hours, strlen(hours));
-	for (int i=0; i<strlen(hours); i++){
+	int rem;
+	int dividend= units;
+	for (int i=0; dividend!=0; i++){
+        rem = dividend%2;
+		dividend = dividend/2;
+		digitalWrite (LEDS[i], rem);
+	}
+}
+
+	
+	
+
+/*
+void lightHours(int units){
+	// Write your logic to light up the hour LEDs here
+	char* hours =Dec2Bin(0);
+	printf("HRS strng is: %s with %d digits \n" , hours, strlen(hours));
+	for (int i=4-strlen(hours); i<5; i++){
 		if (hours[i]=='1') {
 		digitalWrite (LEDS[i], HIGH);
 		printf("printed 1 \n");
@@ -185,21 +207,18 @@ void lightHours(int units){
 	
 }
 
+*/
 /*
  * Turn on the Minute LEDs
  */
 void lightMins(int units){
-	//Write your logic to light up the minute LEDs here
-	char* minutes =Dec2Bin(units);
-	printf("\n MINS is: %s , %d \n" , minutes, strlen(minutes));
-	for (int i=0; i<strlen(minutes); i++){
-		if (minutes[i]=='1') {
-		digitalWrite (LEDS[4+i], HIGH);
-		printf("printed 1 ");
-		}
-		else {digitalWrite (LEDS[4+i], LOW);
-		printf("printed 0 ");}
-		}
+	int rem;
+	int dividend= 5;
+	for (int i=4; dividend!=0; i++){
+        rem = dividend%2;
+		dividend = dividend/2;
+		digitalWrite (LEDS[i], rem);
+	}
 }
 
 /*
@@ -342,4 +361,5 @@ void PiCleanup(void){
 	for(int i; i < sizeof(LEDS)/sizeof(LEDS[0]); i++){
 	    pinMode(LEDS[i], INPUT); //hacky method to switch off all LEDs
 	}
+	pinMode(SECS, INPUT);
 }
