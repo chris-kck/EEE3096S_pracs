@@ -57,26 +57,6 @@ void  INThandler(int sig) // ref: http://en.cppreference.com/w/c/program/signal
 }
 
 
-char binary[10];
-char* Dec2Bin(int decValue){
-
-            int nValue = (int)floor((log(decValue)/log(2))); //to get largest power bin will be raised to for initial division
-            char symbols[2]= {'0','1'};
-            int quotient,remainder;
-
-            int count=0;
-            for(int i = nValue ; i>=0 ;i--){
-                quotient= (int)(decValue/pow(2,i)); //exact integer quotient
-                remainder= decValue% (int)pow(2,i); //remainder
-                decValue=remainder;
-                binary[count]=symbols[quotient]; count++;//=symbols[quotient];
-                }
-                binary[count]='\0'; //null terminator for printing out
-            return binary;
-}
-
-
-
 void initGPIO(void){
 	/* 
 	 * Sets GPIO using wiringPi pins. see pinout.xyz for specific wiringPi pins
@@ -91,7 +71,7 @@ void initGPIO(void){
 	for(int i; i < sizeof(LEDS)/sizeof(LEDS[0]); i++){
 	    pinMode(LEDS[i], OUTPUT);
 		digitalWrite (LEDS[i], HIGH);
-		delay(100);
+		delay(500);
 		digitalWrite (LEDS[i], LOW);
 	}
 	pinMode(SECS, OUTPUT);
@@ -103,7 +83,7 @@ void initGPIO(void){
 	//Set up the Buttons
 	for(int j; j < sizeof(BTNS)/sizeof(BTNS[0]); j++){
 		pinMode(BTNS[j], INPUT);
-		pullUpDnControl(BTNS[j], PUD_UP);
+		//pullUpDnControl(BTNS[j], PUD_UP);
 	}
 	
 	//Attach interrupts to Buttons
@@ -122,13 +102,8 @@ void initGPIO(void){
  */
 int main(void){
 	initGPIO();
-
 	//Set random time (3:04PM)
-	wiringPiI2CWriteReg8(RTC, HOUR, 0x13+TIMEZONE);//HRS
-	wiringPiI2CWriteReg8(RTC, MIN, 0x42); //MINS
-	wiringPiI2CWriteReg8(RTC, SEC, 0x21); //SEC
 	toggleTime();
-	printf("%d",HH);
 	// Repeat this until we shut down
 	for (;;){
 		//Fetch the time from the RTC
@@ -175,6 +150,9 @@ int hFormat(int hours){
 
 void lightHours(int units){
 	// Write your logic to light up the hour LEDs here
+	for(int i=0; i < 4; i++){
+		digitalWrite (LEDS[i], LOW);
+	}
 	int rem;
 	int dividend= units;
 	for (int i=0; dividend!=0; i++){
@@ -208,8 +186,11 @@ void lightHours(int units){
  * Turn on the Minute LEDs
  */
 void lightMins(int units){
+	for(int i=4; i < 10; i++){
+		digitalWrite (LEDS[i], LOW);
+	}
 	int rem;
-	int dividend= 5;
+	int dividend= units;
 	for (int i=4; dividend!=0; i++){
         rem = dividend%2;
 		dividend = dividend/2;
