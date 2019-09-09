@@ -13,7 +13,7 @@ Practical 2 serves as an introduction to programming in C. This is done through 
 ## Prac 3
 Practical 3 will introduce SPI and threading, in order to play some sampled audio on a DAC.
 
-## Prac 4
+## Prac 4 ✓
 The fourth practical introduces I2C and PWM, as well as some more usefule Raspberry Pi concepts. In this practical, you will be making a binary clock that runs as soon as the Raspberry Pi boots.
 
 ## Prac 5
