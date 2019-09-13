@@ -66,13 +66,11 @@ int setup_gpio(void){
     //setting up the buttons
     pinMode(PLAY_BUTTON, INPUT);
     pinMode(STOP_BUTTON, INPUT);
-	//TODO
-     pullUpDnControl(PLAY_BUTTON, PUD_UP);
+    //Pull up R
+    pullUpDnControl(PLAY_BUTTON, PUD_UP);
     pullUpDnControl(STOP_BUTTON, PUD_UP);
     //setting up the SPI interface and clock speed
     wiringPiSPISetup(SPI_CHAN,SPI_SPEED);
-
-    //TODO
     printf("Setup done!\n");
     return 0;
 }
