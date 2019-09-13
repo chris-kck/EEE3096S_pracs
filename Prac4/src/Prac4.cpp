@@ -71,13 +71,9 @@ int setup_gpio(void){
     pullUpDnControl(STOP_BUTTON, PUD_UP);
     //setting up the SPI interface and clock speed
     wiringPiSPISetup(SPI_CHAN,SPI_SPEED);
-<<<<<<< HEAD
-=======
-
     //TODO
     wiringPiISR(PLAY_BUTTON, INT_EDGE_FALLING,play_pause_isr);
     wiringPiISR(PLAY_BUTTON, INT_EDGE_FALLING,stop_isr);
->>>>>>> 9b23e72c4b6611560c8e8eee2451740625102daa
     printf("Setup done!\n");
     return 0;
 }
