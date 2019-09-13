@@ -30,19 +30,37 @@ bool threadReady = false; //using this to finish writing the first column at the
 
 // Configure your interrupts here.
 // Don't forget to use debouncing.
-void play_pause_isr(void){
-    //Write your logis here
-}
+ 
 
-void stop_isr(void){
-    // Write your logic here
-}
+void play_pause_isr(void){ 
+printf("Interrupt Played"); 
+long interrupt_T= millis(); 
+if(interrupt_T-L_IntruptTime>200 ){ 
+playing=!playing ; 
 
+} 
+
+L_IntruptTime = interrupt_T;  
+
+} 
+
+void stop_isr(void){ 
+
+// Write your logic here 
+
+printf("Interrupt Played"); 
+long interrupt_T= millis(); 
+if(interrupt_T-L_IntruptTime>200 ){ 
+stopped=!stopped;  
+
+} 
+
+} 
 /*
  * Setup Function. Called once 
  */
 
-/*
+
 int setup_gpio(void){
     printf("Setting up Pi\n");
     //Set up wiring Pi
@@ -61,7 +79,6 @@ int setup_gpio(void){
     return 0;
 }
 
-*/
 
 
 /* 
@@ -73,7 +90,7 @@ int setup_gpio(void){
  * You need to use the buffer_location variable to check when you need to switch buffers
  */
 
-/*
+
 void *playThread(void *threadargs){
     // If the thread isn't ready, don't do anything
     while(!threadReady)
@@ -83,7 +100,8 @@ void *playThread(void *threadargs){
     while(!stopped){
         //Code to suspend playing if paused
 		//TODO
-        
+	        while(!playing)
+                   continue;
         //Write the buffer out to SPI
 		wiringPiSPIDataRW (SPI_CHAN, buffer[bufferReading][buffer_location], 2); // VERIFY
         //Do some maths to check if you need to toggle buffers
@@ -96,7 +114,7 @@ void *playThread(void *threadargs){
     
     pthread_exit(NULL);
 }
-*/
+
 int main(){
     // Call the setup GPIO function
 	/*if(setup_gpio()==-1){
@@ -109,7 +127,7 @@ int main(){
      */ 
     
     
-    /*
+    
     //Write your logic here
 	pthread_attr_t tattr;
     pthread_t thread_id;
@@ -122,7 +140,7 @@ int main(){
     pthread_attr_setschedparam (&tattr, &param); // setting the new scheduling param 
     pthread_create(&thread_id, &tattr, playThread, (void *)1); // with new priority specified 
     
-    */
+    
     
     /*
      * Read from the file, character by character
