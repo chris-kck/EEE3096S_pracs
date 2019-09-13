@@ -26,6 +26,7 @@ unsigned char buffer[2][BUFFER_SIZE][2];
 int buffer_location = 0;
 bool bufferReading = 0; //using this to switch between column 0 and 1 - the first column
 bool threadReady = false; //using this to finish writing the first column at the start of the song, before the column is played
+long L_IntruptTime=0;
 
 
 // Configure your interrupts here.
@@ -37,11 +38,8 @@ printf("Interrupt Played");
 long interrupt_T= millis(); 
 if(interrupt_T-L_IntruptTime>200 ){ 
 playing=!playing ; 
-
 } 
-
 L_IntruptTime = interrupt_T;  
-
 } 
 
 void stop_isr(void){ 
