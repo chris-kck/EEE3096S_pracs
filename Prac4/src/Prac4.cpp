@@ -73,6 +73,8 @@ int setup_gpio(void){
     wiringPiSPISetup(SPI_CHAN,SPI_SPEED);
 
     //TODO
+    wiringPiISR(PLAY_BUTTON, INT_EDGE_FALLING,play_pause_isr);
+    wiringPiISR(PLAY_BUTTON, INT_EDGE_FALLING,stop_isr);
     printf("Setup done!\n");
     return 0;
 }
