@@ -1,7 +1,7 @@
 /*
  * Prac4.cpp
  * 
- * Originall written by Stefan SchrÃ¶der and Dillion Heald
+ * Originall written by Stefan Schröder and Dillion Heald
  * 
  * Adapted for EEE3096S 2019 by Keegan Crankshaw
  * 
@@ -18,7 +18,6 @@
 
 #include "Prac4.h"
 
-
 using namespace std;
 
 bool playing = true; // should be set false when paused
@@ -27,69 +26,62 @@ unsigned char buffer[2][BUFFER_SIZE][2];
 int buffer_location = 0;
 bool bufferReading = 0; //using this to switch between column 0 and 1 - the first column
 bool threadReady = false; //using this to finish writing the first column at the start of the song, before the column is played
-long lastInterruptTime = 0;
+long L_IntruptTime=0;
+
+
 // Configure your interrupts here.
 // Don't forget to use debouncing.
-void play_pause_isr(void){
-    //Write your logis here
-    long interruptTime = millis();
-    if (interruptTime - lastInterruptTime>200){ 
-        if (playing == true) //Checks if playing
-        {
-            playing = false; // Pause
-			printf("Pause \n");
-        }
-        else
-        {
-            playing = true; // Play
-	        printf("Play %d \n",buffer_location);
-        }
+
+void play_pause_isr(void){ 
+long interrupt_T= millis(); 
+if(interrupt_T-L_IntruptTime>200 ){
+    if(playing){
+        playing=!playing ;
+        printf("Paused \n");
     }
-    lastInterruptTime = interruptTime;
-}
-
-void stop_isr(void){
-    // Write your logic here
-    
-    long interruptTime = millis();
-
-    if (interruptTime - lastInterruptTime>200)
-	{
-		stopped = true;
-
+    else{
+    playing = true; // Play
+    printf("Cont. Play \n");
     }
-    lastInterruptTime = interruptTime;
-}
+} 
+L_IntruptTime = interrupt_T;  
+} 
 
+void stop_isr(void){ 
+
+// Write your logic here 
+
+long interrupt_T= millis(); 
+if(interrupt_T-L_IntruptTime>200 ){
+    stopped=!stopped;  
+    } 
+L_IntruptTime = interrupt_T; 
+} 
 /*
  * Setup Function. Called once 
  */
+
+
 int setup_gpio(void){
+    printf("Setting up Pi\n");
     //Set up wiring Pi
     wiringPiSetup();
-    
     //setting up the buttons
-    
-	pinMode(PLAY_BUTTON, INPUT);
-    pullUpDnControl(PLAY_BUTTON, PUD_UP);
-    
+    pinMode(PLAY_BUTTON, INPUT);
     pinMode(STOP_BUTTON, INPUT);
+    //Pull up R
+    pullUpDnControl(PLAY_BUTTON, PUD_UP);
     pullUpDnControl(STOP_BUTTON, PUD_UP);
-    
-    //setting up the SPI interface
-    
-    if (wiringPiISR(PLAY_BUTTON, INT_EDGE_FALLING, &play_pause_isr) != 0){
-        printf("registering isr for play button failed.");
-    }
-
-    if (wiringPiISR(STOP_BUTTON, INT_EDGE_FALLING, &stop_isr) != 0){
-        printf("registering isr for stop button failed.");
-    }
-
-	wiringPiSPISetup (SPI_CHAN, SPI_SPEED) ;
-    
+    //setting up the SPI interface and clock speed
+    wiringPiSPISetup(SPI_CHAN,SPI_SPEED);
+    //TODO
+    wiringPiISR(PLAY_BUTTON, INT_EDGE_FALLING, &play_pause_isr);
+    wiringPiISR(STOP_BUTTON, INT_EDGE_FALLING, &stop_isr);
+    printf("Setup done!\n");
     return 0;
 }
+
+
 
 /* 
  * Thread that handles writing to SPI
@@ -99,6 +91,8 @@ int setup_gpio(void){
  * You don't need to use the returned value from the wiring pi SPI function
  * You need to use the buffer_location variable to check when you need to switch buffers
  */
+
+
 void *playThread(void *threadargs){
     // If the thread isn't ready, don't do anything
     while(!threadReady)
@@ -136,6 +130,8 @@ int main(){
      * Read https://docs.oracle.com/cd/E19455-01/806-5257/attrib-16/index.html
      */ 
     
+    
+    
     //Write your logic here
 	pthread_attr_t tattr;
     pthread_t thread_id;
@@ -143,12 +139,14 @@ int main(){
     sched_param param;
     
     pthread_attr_init (&tattr);
-    pthread_attr_getschedparam (&tattr, &param); /* safe to get existing scheduling param */
-    param.sched_priority = newprio; /* set the priority; others are unchanged */
-    pthread_attr_setschedparam (&tattr, &param); /* setting the new scheduling param */
-    pthread_create(&thread_id, &tattr, playThread, (void *)1); /* with new priority specified 
+    pthread_attr_getschedparam (&tattr, &param); //safe to get existing scheduling param 
+    param.sched_priority = newprio; // set the priority; others are unchanged 
+    pthread_attr_setschedparam (&tattr, &param); // setting the new scheduling param 
+    pthread_create(&thread_id, &tattr, playThread, (void *)1); // with new priority specified 
     
     
+    
+    /*
      * Read from the file, character by character
      * You need to perform two operations for each character read from the file
      * You will require bit shifting
@@ -162,6 +160,7 @@ int main(){
      * 
      */
      
+    printf("Openning File \n");
     // Open the file
     char ch;
     FILE *filePointer;
@@ -177,19 +176,19 @@ int main(){
     int bufferWriting = 0;
 
     // Have a loop to read from the file
-	 while((ch = fgetc(filePointer)) != EOF){
+	 while((ch = fgetc(filePointer)) != EOF){ //white not yet at the end of the file ^^kck
         while(threadReady && bufferWriting==bufferReading && counter==0){
             //waits in here after it has written to a side, and the thread is still reading from the other side
             continue;
         }
-        
         bufferReading &=0x3ff;
         bufferReading = (1<<13 | (1<<12) | (bufferReading<<2));
-        
         //Set config bits for first 8 bit packet and OR with upper bits
-        buffer[bufferWriting][counter][0] = (0b01110000) | ch>>6; //TODO
-        //Set next 8 bit packet
-        buffer[bufferWriting][counter][1] = ch<<2; //TODO
+        
+        buffer[bufferWriting][counter][0] = 'p' | ch>>6;//'0'| ch>>6 ; //TODO fixed number of control bits p is 01110000 0 is 00110000
+         //Set next 8 bit packet        
+        buffer[bufferWriting][counter][1] = (ch & '?')<<2 ; //Set next 8 bit packet all audio sample bits ? is 00111111
+        //Raw_file -> B1 / B2 -> SPI -> o/p Audio
         
         counter++;
         if(counter >= BUFFER_SIZE+1){
